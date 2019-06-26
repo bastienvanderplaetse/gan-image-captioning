@@ -111,8 +111,6 @@ def run(args):
                 g_batch += 1
 
             iteration += 1
-            if iteration == 6:
-                break
         
         print("Training : Mean G loss : {} / Mean D loss : {}".format(g_loss/g_batch, d_loss/d_batch))
         scores['G_loss_train'].append((g_loss/g_batch).item())
