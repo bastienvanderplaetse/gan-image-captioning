@@ -14,7 +14,11 @@
         "vocab": "data/flickr_vocab.en"
     },
     "seed": 1561478941,
-    "max_epoch": 100,
+    "max_epoch": 3,
+    "logging": {
+        "activate": true,
+        "output_folder": "test"
+    },
     "cuda": {
         "ngpu": 1,
         "device": "cuda:0"

@@ -1,3 +1,4 @@
+import os
 import sys
 import torch
 import torch.optim as optim
@@ -13,6 +14,13 @@ from utils import check_args, fix_seed
 def run(args):
     # Get configuration
     config = exh.load_json(args.CONFIG)
+
+    # Prepare folders for logging
+    logging = config['logging']['activate']
+    if logging:
+        exh.create_directory("output")
+        output = os.path.join("output", config['logging']['output_folder'])
+        exh.create_directory(output)
 
     # Global initialization
     torch.cuda.init()
@@ -70,6 +78,17 @@ def run(args):
 
     generator_trained = config['model']['generator']['train_iteration']
 
+    best_bleu = (0, 1)
+
+    scores = {
+        "bleu": [],
+        "G_loss_train": [],
+        "D_loss_train": [],
+        "G_loss_val": [],
+        "D_loss_val": []
+    }
+    bleus = []
+
     for epoch in range(config['max_epoch']):
         print("Starting Epoch {}".format(epoch + 1))
 
@@ -92,8 +111,12 @@ def run(args):
                 g_batch += 1
 
             iteration += 1
+            if iteration == 6:
+                break
         
         print("Training : Mean G loss : {} / Mean D loss : {}".format(g_loss/g_batch, d_loss/d_batch))
+        scores['G_loss_train'].append((g_loss/g_batch).item())
+        scores['D_loss_train'].append((d_loss/d_batch).item())
 
         # Validation
         model.train(False)
@@ -102,6 +125,8 @@ def run(args):
         # Loss
         out = model.test_performance(vloss_iterator, device)
         print("Validation Loss : G loss : {} / D loss : {}".format(out['G_loss'], out['D_loss']))
+        scores['G_loss_val'].append(out['G_loss'])
+        scores['D_loss_val'].append(out['D_loss'])
 
         # Beam search
         print("Beam search...")
@@ -109,14 +134,26 @@ def run(args):
 
         # BLEU score
         score = bleu_score_4(references, generated_sentences)
-        print("Bleu score : {}".format(score))
+        print("BLEU score : {}".format(score))
+        scores['bleu'].append(score)
+
+        if score > best_bleu[0]:
+            best_bleu = (score, epoch + 1)
+
+        print("Best BLEU so far : {} (Epoch {})".format(best_bleu[0], best_bleu[1]))
+
+        if logging:
+            output_file = 'output_{}'.format(epoch + 1)
+            output_sentences = os.path.join(output, output_file)
+            exh.write_text('\n'.join(generated_sentences), output_sentences)
         
         model.train(True)
         torch.set_grad_enabled(True)
-
-    # for batch in train_iterator:
-    #     batch.device(device)
-    #     print(batch['feats'].shape)
+    
+    if logging:
+        output_scores = os.path.join(output, 'scores.json')
+        exh.write_json(scores, output_scores)
+        print("Scores saved in {}".format(output_scores))        
 
 
 if __name__ == "__main__":
