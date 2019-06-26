@@ -45,5 +45,32 @@
             "pin_memory": false,
             "num_workers": 0
         }
-    }
+    },
+    "model": {
+        "emb_dim": 128,
+        "dec_dim": 256,
+        "gradient_weight": 10,
+        "feature_size": 2048,
+        "optimizers": {
+            "lr": 0.002,
+            "weight_decay": 1e-05,
+            "betas": {
+                "min": 0.5,
+                "max": 0.999
+            }
+        },
+        "generator": {
+            "dropout": 0.2,
+            "dropout_type": "local",
+            "train_iteration": 5,
+            "dec_init_type": "random",
+            "att_activ": "tanh"
+        },
+        "discriminator": {
+            "dec_init_type": "zero",
+            "att_activ": "relu"
+        }
+    },
+    "max_epoch": 100
+
 }
