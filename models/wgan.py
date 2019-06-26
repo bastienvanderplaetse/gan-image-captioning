@@ -45,7 +45,7 @@ class WGAN(nn.Module):
         return {'feats': (feats, None)}
 
     def forward(self, batch, optimG, optimD, epoch, iteration):
-        sentences = batch["tokenized"]
+        sentences = batch['tokenized']
         sentences_G = sentences[:-1]
         sentences_D = sentences[1:]
 
@@ -113,7 +113,7 @@ class WGAN(nn.Module):
             
             features = self.encode(batch)
 
-            sentences = batch["tokenized"]
+            sentences = batch['tokenized']
             sentences_G = sentences[:-1]
             sentences_D = sentences[1:]
 

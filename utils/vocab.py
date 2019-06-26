@@ -24,3 +24,25 @@ def words2tokens(sentence, vocab, tokenized=True):
         tokens = [vocab["<bos>"]["id"]] + tokens + [vocab["<eos>"]["id"]]
     
     return tokens
+
+def tokens2words(tokens, vocab):
+    """Convert a token list from tokens to corresponding words based on a vocabulary corpus
+    Parameters
+    ----------
+    filename : list
+        The list of tokens
+    vocab : dict
+        The vocabulary corpus
+    Returns
+    -------
+    str
+        the sentence corresponding to the token list
+    """
+    words = []
+
+    for token in tokens:
+        if token == 2: # if <eos>
+            break
+        words.append(vocab['token_list'][token])
+
+    return ' '.join(words)

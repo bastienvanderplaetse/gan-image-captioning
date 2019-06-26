@@ -4,6 +4,7 @@ import torch.optim as optim
 import utils.explorer_helper as exh
 
 from datasets.captioning import CaptioningDataset
+from metrics.search import beam_search
 from models.wgan import WGAN
 from torch.utils.data import DataLoader
 from utils import check_args, fix_seed
@@ -86,6 +87,7 @@ def run(args):
                 g_batch += 1
 
             iteration += 1
+            break
         
         print("Training : Mean G loss : {} / Mean D loss : {}".format(g_loss/g_batch, d_loss/d_batch))
 
@@ -97,7 +99,9 @@ def run(args):
         out = model.test_performance(vloss_iterator, device)
         print("Validation Loss : G loss : {} / D loss : {}".format(out['G_loss'], out['D_loss']))
 
-        # Beam search TODO
+        # Beam search
+        print("Beam search...")
+        generated_sentences = beam_search(model.G, beam_iterator, vocab, config['beam_search'], device)
 
         # BLEU score TODO
 
