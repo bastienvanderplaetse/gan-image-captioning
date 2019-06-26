@@ -4,6 +4,7 @@ import torch.optim as optim
 import utils.explorer_helper as exh
 
 from datasets.captioning import CaptioningDataset
+from metrics.scores import bleu_score_4, prepare_references
 from metrics.search import beam_search
 from models.wgan import WGAN
 from torch.utils.data import DataLoader
@@ -20,6 +21,10 @@ def run(args):
 
     # Load vocabulary
     vocab = exh.load_json(config['data']['vocab'])
+
+    # Prepare references
+    references = exh.read_file(config['data']['val']['captions'])
+    references = prepare_references(references)
 
     # Prepare datasets and dataloaders
     training_dataset = CaptioningDataset(config['data']['train'], "train", vocab, config['sampler']['train'])
@@ -87,7 +92,6 @@ def run(args):
                 g_batch += 1
 
             iteration += 1
-            break
         
         print("Training : Mean G loss : {} / Mean D loss : {}".format(g_loss/g_batch, d_loss/d_batch))
 
@@ -103,9 +107,10 @@ def run(args):
         print("Beam search...")
         generated_sentences = beam_search(model.G, beam_iterator, vocab, config['beam_search'], device)
 
-        # BLEU score TODO
-
-
+        # BLEU score
+        score = bleu_score_4(references, generated_sentences)
+        print("Bleu score : {}".format(score))
+        
         model.train(True)
         torch.set_grad_enabled(True)
 

@@ -1,1 +1,1 @@
-__all__ = ['search']
+__all__ = ['scores', 'search']
