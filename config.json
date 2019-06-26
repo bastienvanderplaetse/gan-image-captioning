@@ -1,0 +1,49 @@
+{
+    "data": {
+        "train": {
+            "captions": "data/captions/norm_train.lc.norm.tok.en",
+            "features": "data/features/train-resnet50-avgpool.npy",
+            "links": "data/links/train.txt"
+        },
+        "val": {
+            "captions": "data/captions/norm_val.lc.norm.tok.en",
+            "features": "data/features/val-resnet50-avgpool.npy",
+            "links": "data/links/val.txt"
+        },
+        "images": "data/images",
+        "vocab": "data/flickr_vocab.en"
+    },
+    "seed": 1561478941,
+    "cuda": {
+        "ngpu": 1,
+        "device": "cuda:0"
+    },
+    "sampler": {
+        "train": {
+            "batch_size": 32,
+            "max_len": 20
+        },
+        "val": {
+            "batch_size": 32,
+            "max_len": 20
+        },
+        "beam": {
+            "batch_size": 32,
+            "drop_last": false
+        }
+    },
+    "iterator": {
+        "train": {
+            "pin_memory": false,
+            "num_workers": 0
+        },
+        "val": {
+            "pin_memory": false,
+            "num_workers": 0
+        },
+        "beam": {
+            "pin_memory": false,
+            "num_workers": 0
+        }
+    }
+}
