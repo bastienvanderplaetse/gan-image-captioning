@@ -1,9 +1,12 @@
 import argparse
+import gc
 import random
 import numpy as np
 import sys
 import time
 import torch
+
+from functools import reduce
 
 __all__ = ['explorer_helper', 'vocab']
 
@@ -45,3 +48,16 @@ def fix_seed(seed=None):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     return seed
+
+def memory_usage():
+    tot = 0
+    for obj in gc.get_objects():
+        try:
+            if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                # print(obj.device, type(obj), obj.size())
+                tot += 1
+        except: pass
+        
+    # print("Memory allocated : {}".format(torch.cuda.memory_allocated()))
+    # print("Memory cached : {}".format(torch.cuda.memory_cached()))
+    print("Total tensors : {}".format(tot))

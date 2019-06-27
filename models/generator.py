@@ -11,7 +11,6 @@ class Generator(nn.Module):
 
     def __init__(self, input_size, hidden_size, n_vocab, emb, feature_size, config_model):
         super().__init__()
-        # print("init G")
         self.n_vocab = n_vocab
         self.dropout = config_model['dropout']
         self.local_dropout = config_model['dropout_type'] == "local"

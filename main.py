@@ -9,7 +9,7 @@ from metrics.scores import bleu_score_4, prepare_references
 from metrics.search import beam_search
 from models.wgan import WGAN
 from torch.utils.data import DataLoader
-from utils import check_args, fix_seed
+from utils import check_args, fix_seed, memory_usage
 
 def run(args):
     # Get configuration
@@ -101,6 +101,7 @@ def run(args):
 
         for batch in train_iterator:
             batch.device(device)
+            
             out = model(batch, optim_G, optim_D, epoch, iteration)
             
             d_loss += out['D_loss']
@@ -111,11 +112,11 @@ def run(args):
                 g_batch += 1
 
             iteration += 1
-        
+                
         print("Training : Mean G loss : {} / Mean D loss : {}".format(g_loss/g_batch, d_loss/d_batch))
-        scores['G_loss_train'].append((g_loss/g_batch).item())
-        scores['D_loss_train'].append((d_loss/d_batch).item())
-
+        scores['G_loss_train'].append((g_loss/g_batch))
+        scores['D_loss_train'].append((d_loss/d_batch))
+        
         # Validation
         model.train(False)
         torch.set_grad_enabled(False)

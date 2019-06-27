@@ -16,6 +16,7 @@ class WGAN(nn.Module):
 
         emb_dim = config_model['emb_dim']
         dec_dim = config_model['dec_dim']
+
         self.gradient_weight = config_model['gradient_weight']
         self.generator_training = config_model['generator']['train_iteration']
         feature_size = config_model['feature_size']
@@ -31,6 +32,7 @@ class WGAN(nn.Module):
             feature_size=feature_size,
             config_model=config_model['generator']
         )
+
         self.D = Discriminator(
             input_size=emb_dim,
             hidden_size=dec_dim,
@@ -78,7 +80,10 @@ class WGAN(nn.Module):
 
             optimG.step()
 
-        return {"G_loss": g_loss, "D_loss": d_loss}
+            return {"G_loss": g_loss.to("cpu").item(), "D_loss": d_loss.to("cpu").item()}
+
+        return {"G_loss": g_loss, "D_loss": d_loss.to("cpu").item()}
+        
 
         
     def compute_gradient_penalty(self, D, feature, real_samples, fake_samples):
@@ -124,8 +129,8 @@ class WGAN(nn.Module):
             g_loss = -torch.mean(fake)
             d_loss = -torch.mean(real) + torch.mean(fake)
 
-            cumul_loss_D += d_loss.item()
-            cumul_loss_G += g_loss.item()
+            cumul_loss_D += d_loss.to("cpu").item()
+            cumul_loss_G += g_loss.to("cpu").item()
             n_batch += 1
         
         return {"G_loss": cumul_loss_G/n_batch, "D_loss": cumul_loss_D/n_batch}

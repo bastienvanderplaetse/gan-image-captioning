@@ -1,8 +1,13 @@
 import torch
 
 from utils import vocab as uvoc
+from utils import memory_usage
 
 def beam_search(generator, data_loader, vocab, config, device):
+    print("BS")
+    memory_usage()
+    import sys
+    sys.exit(0)
     max_batch_size = data_loader.batch_sampler.batch_size
     max_len = config['max_len']
     k = config['beam_size']
