@@ -11,7 +11,7 @@
             "links": "data/links/val.txt"
         },
         "images": "data/images",
-        "vocab": "data/flickr_vocab.en"
+        "vocab": "data/flickr_4000.en"
     },
     "seed": 42,
     "max_epoch": 100,
@@ -77,7 +77,7 @@
         }
     },
     "beam_search": {
-        "beam_size": 5,
+        "beam_size": 6,
         "max_len": 20
     }
 }

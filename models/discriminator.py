@@ -29,21 +29,35 @@ class Discriminator(nn.Module):
 
         self.n_states = 1
 
-    def forward(self, features, y, one_hot=True):
+    def forward(self, features, y, one_hot=True, epoch=0):
         # Convert token indices to embeddings -> T*B*E
+        print("=====================")
         if one_hot:
             y_emb = self.emb(y)
         else:
             y_emb = torch.matmul(y, self.emb.weight)
 
+        if epoch > 28:
+            print(y_emb)
+            print(self.emb.weight)
+            print(torch.isnan(self.emb.weight))
+
         # Get initial hidden state
         h = self.f_init(features)
+        # print(h)
+        # print(torch.isnan(h))
 
         # -1: So that we skip the timestep where input is <eos>
         for t in range(y_emb.shape[0]):
             o, h = self.f_next(features, y_emb[t], h)
+        # print(o)
+        # print(torch.isnan(o))
+        # print(h)
+        # print(torch.isnan(h))
         
         valid = self.out2prob_classif(o)
+        # print(valid)
+        # print(torch.isnan(valid))
 
         return valid
 

@@ -84,14 +84,14 @@ class Generator(nn.Module):
 
         logit = self.hid2out(h2)
 
-        # prob = F.softmax(self.out2prob(logit), dim=-1)
-        prob = F.log_softmax(self.out2prob(logit), dim=-1)
+        prob = F.softmax(self.out2prob(logit), dim=-1)
+        # prob = F.log_softmax(self.out2prob(logit), dim=-1)
         
         return prob, h2
 
 
-    def f_probs(self):
-        pass
+    def f_probs(self, batch_size, n_vocab, device):
+        return torch.zeros(batch_size, n_vocab, device=device)
 
     def f_init(self, ctx_dict):
         """Returns the initial h_0, c_0 for the decoder."""

@@ -41,12 +41,16 @@ class WGAN(nn.Module):
             feature_size=feature_size,
             config_model=config_model['discriminator']
         )
+
+    def get_generator(self):
+        return self.G
     
     def encode(self, batch):
         feats = (batch['feats'])
         return {'feats': (feats, None)}
 
     def forward(self, batch, optimG, optimD, epoch, iteration):
+        print("=========================")
         sentences = batch['tokenized']
         sentences_G = sentences[:-1]
         sentences_D = sentences[1:]
@@ -59,8 +63,8 @@ class WGAN(nn.Module):
         # Train Discriminator
         optimD.zero_grad()
         gen_s = self.G(features, sentences_G)
-        real = self.D(features, sentences_D)
-        fake = self.D(features, gen_s, one_hot=False)
+        real = self.D(features, sentences_D, epoch=epoch+1)
+        fake = self.D(features, gen_s, one_hot=False, epoch=epoch+1)
 
         gradient_penalty = self.compute_gradient_penalty(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab), gen_s)
 
@@ -68,6 +72,20 @@ class WGAN(nn.Module):
 
         d_loss.backward()
         optimD.step()
+        
+        if torch.isnan(d_loss):
+            import sys
+            sys.exit()
+            print(real)
+            print(torch.isnan(real))
+            print(fake)
+            print(torch.isnan(fake))
+            print(gradient_penalty)
+            print(torch.isnan(gradient_penalty))
+            print(torch.mean(real))
+            print(torch.isnan(torch.mean(real)))
+            print(torch.mean(fake))
+            print(torch.isnan(torch.mean(fake)))
 
         optimG.zero_grad()
 

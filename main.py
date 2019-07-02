@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from utils import check_args, fix_seed, memory_usage
 
 def run(args):
+    print(torch.backends.cudnn.benchmark)
     # Get configuration
     config = exh.load_json(args.CONFIG)
 
@@ -89,6 +90,8 @@ def run(args):
     }
     bleus = []
 
+    # torch.autograd.set_detect_anomaly(True)
+
     for epoch in range(config['max_epoch']):
         print("Starting Epoch {}".format(epoch + 1))
 
@@ -106,6 +109,11 @@ def run(args):
             
             d_loss += out['D_loss']
             d_batch += 1
+
+            if epoch+1 == 31:
+                print(out['D_loss'])
+                print(d_loss)
+                print("============")
 
             if iteration % generator_trained == 0:
                 g_loss += out['G_loss']
@@ -129,7 +137,8 @@ def run(args):
 
         # Beam search
         print("Beam search...")
-        generated_sentences = beam_search(model.G, beam_iterator, vocab, config['beam_search'], device)
+        # generated_sentences = beam_search(model.G, beam_iterator, vocab, config['beam_search'], device)
+        generated_sentences = beam_search([model], beam_iterator, vocab, device=device)
 
         # BLEU score
         score = bleu_score_4(references, generated_sentences)
