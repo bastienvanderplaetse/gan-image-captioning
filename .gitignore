@@ -109,3 +109,5 @@ venv.bak/
 # Project
 data/*
 output/*
+annotations/*
+cocodataset/*

@@ -27,7 +27,7 @@ def run(args):
     norm_captions = []
     for caption in captions:
         norm_caption = "".join([w for w in caption if w not in string.punctuation])
-        norm_caption = norm_caption.replace("  ", " ")
+        norm_caption = norm_caption.replace("  ", " ").lower()
         if norm_caption[-1] == " ":
             norm_caption = norm_caption[:-1]
         norm_captions.append(norm_caption)

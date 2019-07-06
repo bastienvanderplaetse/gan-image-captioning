@@ -5,11 +5,13 @@ import torch.optim as optim
 import utils.explorer_helper as exh
 
 from datasets.captioning import CaptioningDataset
-from metrics.scores import bleu_score_4, prepare_references
+from metrics.scores import bleu_score, prepare_references
 from metrics.search import beam_search
 from models.wgan import WGAN
 from torch.utils.data import DataLoader
 from utils import check_args, fix_seed, memory_usage
+
+from torchviz import make_dot, make_dot_from_trace
 
 def run(args):
     print(torch.backends.cudnn.benchmark)
@@ -32,7 +34,7 @@ def run(args):
     vocab = exh.load_json(config['data']['vocab'])
 
     # Prepare references
-    references = exh.read_file(config['data']['val']['captions'])
+    references = exh.read_file(config['data']['beam']['captions'])
     references = prepare_references(references)
 
     # Prepare datasets and dataloaders
@@ -54,7 +56,7 @@ def run(args):
         num_workers=config['iterator']['val']['num_workers']
     )
 
-    beam_dataset = CaptioningDataset(config['data']['val'], "beam", vocab, config['sampler']['beam'])
+    beam_dataset = CaptioningDataset(config['data']['beam'], "beam", vocab, config['sampler']['beam'])
     beam_iterator = DataLoader(
         beam_dataset,
         batch_sampler=beam_dataset.sampler,
@@ -65,6 +67,7 @@ def run(args):
 
     # Prepare model
     model = WGAN(len(vocab['token_list']), config['model'])
+    model.reset_parameters()
 
     lr = config['model']['optimizers']['lr']
     betas = (config['model']['optimizers']['betas']['min'], config['model']['optimizers']['betas']['max'])
@@ -79,18 +82,20 @@ def run(args):
 
     generator_trained = config['model']['generator']['train_iteration']
 
+    scores = {
+        "BLEU": [],
+        "G_loss_train": [],
+        "D_loss_train": []
+        # "G_loss_val": [],
+        # "D_loss_val": []
+    }
+    max_bleu = config['BLEU']['max_bleu']
+    bleus = [[]] * max_bleu
     best_bleu = (0, 1)
 
-    scores = {
-        "bleu": [],
-        "G_loss_train": [],
-        "D_loss_train": [],
-        "G_loss_val": [],
-        "D_loss_val": []
-    }
-    bleus = []
-
     # torch.autograd.set_detect_anomaly(True)
+    model.train(True)
+    torch.set_grad_enabled(True)
 
     for epoch in range(config['max_epoch']):
         print("Starting Epoch {}".format(epoch + 1))
@@ -110,10 +115,10 @@ def run(args):
             d_loss += out['D_loss']
             d_batch += 1
 
-            if epoch+1 == 31:
-                print(out['D_loss'])
-                print(d_loss)
-                print("============")
+            # if epoch+1 == 31:
+            #     print(out['D_loss'])
+            #     print(d_loss)
+            #     print("============")
 
             if iteration % generator_trained == 0:
                 g_loss += out['G_loss']
@@ -130,10 +135,10 @@ def run(args):
         torch.set_grad_enabled(False)
 
         # Loss
-        out = model.test_performance(vloss_iterator, device)
-        print("Validation Loss : G loss : {} / D loss : {}".format(out['G_loss'], out['D_loss']))
-        scores['G_loss_val'].append(out['G_loss'])
-        scores['D_loss_val'].append(out['D_loss'])
+        # out = model.test_performance(vloss_iterator, device)
+        # print("Validation Loss : G loss : {} / D loss : {}".format(out['G_loss'], out['D_loss']))
+        # scores['G_loss_val'].append(out['G_loss'])
+        # scores['D_loss_val'].append(out['D_loss'])
 
         # Beam search
         print("Beam search...")
@@ -141,9 +146,15 @@ def run(args):
         generated_sentences = beam_search([model], beam_iterator, vocab, device=device)
 
         # BLEU score
-        score = bleu_score_4(references, generated_sentences)
-        print("BLEU score : {}".format(score))
-        scores['bleu'].append(score)
+        for n in range(max_bleu):
+            score = bleu_score(references, generated_sentences, n+1)
+            bleus[n].append(score)
+            print("BLEU-{} score : {}".format(n+1, score))
+        
+
+        # score = bleu_score(references, generated_sentences)
+        # print("BLEU score : {}".format(score))
+        # scores['bleu'].append(score)
 
         if score > best_bleu[0]:
             best_bleu = (score, epoch + 1)

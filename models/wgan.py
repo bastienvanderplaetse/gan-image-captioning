@@ -42,6 +42,11 @@ class WGAN(nn.Module):
             config_model=config_model['discriminator']
         )
 
+    def reset_parameters(self):
+        for name, param in self.named_parameters():
+            if param.requires_grad and param.dim() > 1:
+                nn.init.kaiming_normal_(param.data)
+
     def get_generator(self):
         return self.G
     
@@ -50,7 +55,7 @@ class WGAN(nn.Module):
         return {'feats': (feats, None)}
 
     def forward(self, batch, optimG, optimD, epoch, iteration):
-        print("=========================")
+        # print("=========================")
         sentences = batch['tokenized']
         sentences_G = sentences[:-1]
         sentences_D = sentences[1:]
@@ -67,15 +72,30 @@ class WGAN(nn.Module):
         fake = self.D(features, gen_s, one_hot=False, epoch=epoch+1)
 
         gradient_penalty = self.compute_gradient_penalty(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab), gen_s)
-
+        if epoch > 30:
+            print(gradient_penalty)
+            print(batch['feats'])
         d_loss = -torch.mean(real) + torch.mean(fake) + self.gradient_weight * gradient_penalty
 
+        # print(d_loss.grad_fn)
+        
+        # print("\t{0}".format(d_loss.grad_fn.next_functions[0][0]))
+        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[0][0].next_functions[0][0]))
+        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[0][0].next_functions[1][0]))
+        
+        # print("\t{0}".format(d_loss.grad_fn.next_functions[1][0]))
+        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[1][0].next_functions[0][0]))
+        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[1][0].next_functions[1][0]))
+
+        # import sys
+        # sys.exit()
+
         d_loss.backward()
+        clip = 1.0
+        torch.nn.utils.clip_grad_norm_(self.D.parameters(), clip)
         optimD.step()
         
         if torch.isnan(d_loss):
-            import sys
-            sys.exit()
             print(real)
             print(torch.isnan(real))
             print(fake)
@@ -86,6 +106,8 @@ class WGAN(nn.Module):
             print(torch.isnan(torch.mean(real)))
             print(torch.mean(fake))
             print(torch.isnan(torch.mean(fake)))
+            import sys
+            sys.exit()
 
         optimG.zero_grad()
 
@@ -96,6 +118,7 @@ class WGAN(nn.Module):
             g_loss = -torch.mean(fake)
             g_loss.backward()
 
+            torch.nn.utils.clip_grad_norm_(self.G.parameters(), clip)
             optimG.step()
 
             return {"G_loss": g_loss.to("cpu").item(), "D_loss": d_loss.to("cpu").item()}

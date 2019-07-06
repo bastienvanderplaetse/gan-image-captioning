@@ -20,6 +20,19 @@ def create_directory(dir_name):
     if not os.path.exists(dir_name) or not os.path.isdir(dir_name):
             os.mkdir(dir_name)
 
+def file_exists(filename):
+    """Checks if a file exists
+    Parameters
+    ----------
+    filename : str
+        The name of the file
+    Returns
+    -------
+    boolean
+        True if the file exists, False else
+    """
+    return os.path.exists(filename) and not os.path.isdir(filename)
+
 def load_json(filename):
     """Loads a JSON file
     Parameters
