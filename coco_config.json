@@ -22,7 +22,7 @@
     "max_epoch": 50,
     "logging": {
         "activate": true,
-        "output_folder": "test"
+        "output_folder": "lr001"
     },
     "cuda": {
         "ngpu": 1,
@@ -30,7 +30,7 @@
     },
     "sampler": {
         "train": {
-            "batch_size": 128,
+            "batch_size": 16,
             "max_len": 20
         },
         "val": {
@@ -57,9 +57,11 @@
         }
     },
     "model": {
-        "emb_dim": 128,
+        "embeddings": "cocodataset/embeddings/glove.6B.300d.txt",
+        "emb_dim": 300,
         "dec_dim": 256,
         "gradient_weight": 10,
+        "clip": 1.0,
         "feature_size": 2048,
         "optimizers": {
             "lr": 0.003,

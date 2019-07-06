@@ -10,19 +10,26 @@ from torch.autograd import Variable
 
 class WGAN(nn.Module):
 
-    def __init__(self, n_vocab, config_model):
+    def __init__(self, n_vocab, config_model, weights):
         super(WGAN, self).__init__()
         self.n_trg_vocab = n_vocab
 
         emb_dim = config_model['emb_dim']
         dec_dim = config_model['dec_dim']
 
+        self.clip = config_model['clip']
         self.gradient_weight = config_model['gradient_weight']
         self.generator_training = config_model['generator']['train_iteration']
         feature_size = config_model['feature_size']
 
         self.emb_G = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
         self.emb_D = nn.Embedding(n_vocab, emb_dim, padding_idx=0)
+
+        if weights is not None:
+            self.emb_G.weight.data = torch.Tensor(weights)
+            self.emb_D.weight.data = torch.Tensor(weights)
+            self.emb_G.weight.require_grad = False
+            self.emb_D.weight.require_grad = False
 
         self.G = Generator(
             input_size=emb_dim,
@@ -91,23 +98,8 @@ class WGAN(nn.Module):
         # sys.exit()
 
         d_loss.backward()
-        clip = 1.0
-        torch.nn.utils.clip_grad_norm_(self.D.parameters(), clip)
+        torch.nn.utils.clip_grad_norm_(self.D.parameters(), self.clip)
         optimD.step()
-        
-        if torch.isnan(d_loss):
-            print(real)
-            print(torch.isnan(real))
-            print(fake)
-            print(torch.isnan(fake))
-            print(gradient_penalty)
-            print(torch.isnan(gradient_penalty))
-            print(torch.mean(real))
-            print(torch.isnan(torch.mean(real)))
-            print(torch.mean(fake))
-            print(torch.isnan(torch.mean(fake)))
-            import sys
-            sys.exit()
 
         optimG.zero_grad()
 

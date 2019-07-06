@@ -1,8 +1,10 @@
 import os
 import sys
+import time
 import torch
 import torch.optim as optim
 import utils.explorer_helper as exh
+import utils.vocab as uvoc
 
 from datasets.captioning import CaptioningDataset
 from metrics.scores import bleu_score, prepare_references
@@ -66,7 +68,12 @@ def run(args):
     )
 
     # Prepare model
-    model = WGAN(len(vocab['token_list']), config['model'])
+    weights = None
+    if len(config['model']['embeddings']) > 0:
+        weights = uvoc.init_weights(vocab, config['model']['emb_dim'])
+        uvoc.glove_weights(weights, config['model']['embeddings'], vocab)
+
+    model = WGAN(len(vocab['token_list']), config['model'], weights)
     model.reset_parameters()
 
     lr = config['model']['optimizers']['lr']
@@ -98,6 +105,7 @@ def run(args):
     torch.set_grad_enabled(True)
 
     for epoch in range(config['max_epoch']):
+        secs = time.time()
         print("Starting Epoch {}".format(epoch + 1))
 
         iteration = 1
@@ -126,7 +134,7 @@ def run(args):
 
             iteration += 1
                 
-        print("Training : Mean G loss : {} / Mean D loss : {}".format(g_loss/g_batch, d_loss/d_batch))
+        print("Training : Mean G loss : {} / Mean D loss : {} ({} seconds elapsed)".format(g_loss/g_batch, d_loss/d_batch, time.time()-secs))
         scores['G_loss_train'].append((g_loss/g_batch))
         scores['D_loss_train'].append((d_loss/d_batch))
         
@@ -168,6 +176,9 @@ def run(args):
         
         model.train(True)
         torch.set_grad_enabled(True)
+        print("Epoch finished in {} seconds".format(time.time()-secs))
+
+        
     
     if logging:
         output_scores = os.path.join(output, 'scores.json')

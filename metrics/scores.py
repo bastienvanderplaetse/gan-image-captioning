@@ -4,14 +4,9 @@ def prepare_references(references):
     refs = []
     for reference in references:
         captions = reference.split('###')
-        # print(captions)
         captions = [caption.split() for caption in captions]
-        # print(captions)
         refs.append(captions)
-    # a =[[reference.split()] for reference in references]
-    # print(a)
-    print(refs)
-    return [[reference.split()] for reference in references]
+    return refs
 
 def prepare_hypothesis(hypothesis):
     return [hyp.split() for hyp in hypothesis]
