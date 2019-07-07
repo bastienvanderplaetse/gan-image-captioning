@@ -22,7 +22,7 @@
     "max_epoch": 50,
     "logging": {
         "activate": true,
-        "output_folder": "lr001"
+        "output_folder": "config6"
     },
     "cuda": {
         "ngpu": 1,
@@ -30,7 +30,7 @@
     },
     "sampler": {
         "train": {
-            "batch_size": 16,
+            "batch_size": 128,
             "max_len": 20
         },
         "val": {
@@ -61,7 +61,7 @@
         "emb_dim": 300,
         "dec_dim": 256,
         "gradient_weight": 10,
-        "clip": 1.0,
+        "clip": 0.25,
         "feature_size": 2048,
         "optimizers": {
             "lr": 0.003,
@@ -72,9 +72,9 @@
             }
         },
         "generator": {
-            "dropout_emb": 0.2,
+            "dropout_emb": 0.1,
             "dropout_type": "local",
-            "dropout_state": 0.2,
+            "dropout_state": 0.0,
             "train_iteration": 5,
             "dec_init_type": "random",
             "att_activ": "tanh"

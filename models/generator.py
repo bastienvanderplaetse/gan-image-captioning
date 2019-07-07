@@ -12,7 +12,8 @@ class Generator(nn.Module):
     def __init__(self, input_size, hidden_size, n_vocab, emb, feature_size, config_model):
         super().__init__()
         self.n_vocab = n_vocab
-        self.dropout = config_model['dropout']
+        self.dropout_emb = config_model['dropout_emb']
+        self.dropout_state = config_model['dropout_state']
         self.local_dropout = config_model['dropout_type'] == "local"
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -26,8 +27,11 @@ class Generator(nn.Module):
 
         self.emb = emb
 
-        if self.dropout > 0:
-            self.do = nn.Dropout(p=self.dropout)
+        if self.dropout_emb > 0:
+            self.do_emb = nn.Dropout(p=self.dropout_emb)
+
+        if self.dropout_state > 0:
+            self.do_state = nn.Dropout(p=self.dropout_state)
 
         self.dec0 = GRUCell(self.input_size, self.hidden_size)
         self.dec1 = GRUCell(self.hidden_size, self.hidden_size)
@@ -58,10 +62,10 @@ class Generator(nn.Module):
     def f_next(self, features, y, prob, h):
         current_batch_size = len(y)
 
-        if self.dropout:
+        if self.dropout_emb:
             if self.local_dropout:
                 ones = torch.ones(current_batch_size)
-                ones = self.do(ones)
+                ones = self.do_emb(ones)
                 dropped_y = torch.zeros_like(y, device=y.device)
 
                 for i in range(current_batch_size):
@@ -70,11 +74,17 @@ class Generator(nn.Module):
                     else:
                         dropped_y[i] = y[i]
             else:
-                dropped_y = self.do(y)
+                dropped_y = self.do_emb(y)
+        else:
+            dropped_y = y
 
         # hidden_state from first decoder
         h1_c1 = self.dec0(dropped_y, h)
         h1 = get_rnn_hidden_state(h1_c1)
+        
+        if self.dropout_state > 0:
+            h1 = self.do_state(h1)
+
         ct = self.att(features[self.ctx_name][0]).squeeze(0)
         h1_ct = torch.mul(h1, ct)
 

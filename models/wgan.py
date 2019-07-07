@@ -72,48 +72,34 @@ class WGAN(nn.Module):
         g_loss = 0
         d_loss = 0
 
-        # Train Discriminator
-        optimD.zero_grad()
         gen_s = self.G(features, sentences_G)
-        real = self.D(features, sentences_D, epoch=epoch+1)
-        fake = self.D(features, gen_s, one_hot=False, epoch=epoch+1)
 
-        gradient_penalty = self.compute_gradient_penalty(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab), gen_s)
-        if epoch > 30:
-            print(gradient_penalty)
-            print(batch['feats'])
-        d_loss = -torch.mean(real) + torch.mean(fake) + self.gradient_weight * gradient_penalty
+        # Train Discriminator
+        for i in range(iteration):
+            optimD.zero_grad()
+            real = self.D(features, sentences_D, epoch=epoch+1)
+            fake = self.D(features, gen_s, one_hot=False, epoch=epoch+1)
 
-        # print(d_loss.grad_fn)
-        
-        # print("\t{0}".format(d_loss.grad_fn.next_functions[0][0]))
-        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[0][0].next_functions[0][0]))
-        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[0][0].next_functions[1][0]))
-        
-        # print("\t{0}".format(d_loss.grad_fn.next_functions[1][0]))
-        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[1][0].next_functions[0][0]))
-        # print("\t\t{0}".format(d_loss.grad_fn.next_functions[1][0].next_functions[1][0]))
+            gradient_penalty = self.compute_gradient_penalty(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab), gen_s)
+            d_loss = -torch.mean(real) + torch.mean(fake) + self.gradient_weight * gradient_penalty
 
-        # import sys
-        # sys.exit()
-
-        d_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.D.parameters(), self.clip)
-        optimD.step()
+            d_loss.backward(retain_graph=i!=(iteration-1))
+            torch.nn.utils.clip_grad_norm_(self.D.parameters(), self.clip)
+            optimD.step()
 
         optimG.zero_grad()
 
-        if iteration % self.generator_training == 0:
+        # if iteration % self.generator_training == 0:
             # Train Generator
-            gen_s = self.G(features, sentences_G)
-            fake = self.D(features, gen_s, one_hot=False)
-            g_loss = -torch.mean(fake)
-            g_loss.backward()
+        gen_s = self.G(features, sentences_G)
+        fake = self.D(features, gen_s, one_hot=False)
+        g_loss = -torch.mean(fake)
+        g_loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(self.G.parameters(), clip)
-            optimG.step()
+        torch.nn.utils.clip_grad_norm_(self.G.parameters(), self.clip)
+        optimG.step()
 
-            return {"G_loss": g_loss.to("cpu").item(), "D_loss": d_loss.to("cpu").item()}
+        # return {"G_loss": g_loss.to("cpu").item(), "D_loss": d_loss.to("cpu").item()}
 
         return {"G_loss": g_loss, "D_loss": d_loss.to("cpu").item()}
         

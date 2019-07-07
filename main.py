@@ -116,23 +116,21 @@ def run(args):
         g_loss = 0
 
         for batch in train_iterator:
-            batch.device(device)
+            if time.time()-secs <= 30*60:
+                batch.device(device)
             
-            out = model(batch, optim_G, optim_D, epoch, iteration)
+                out = model(batch, optim_G, optim_D, epoch, iteration)
             
-            d_loss += out['D_loss']
-            d_batch += 1
-
-            # if epoch+1 == 31:
-            #     print(out['D_loss'])
-            #     print(d_loss)
-            #     print("============")
-
-            if iteration % generator_trained == 0:
+                d_loss += out['D_loss']
+                d_batch += 1
                 g_loss += out['G_loss']
                 g_batch += 1
 
-            iteration += 1
+                # if iteration % generator_trained == 0:
+                #     g_loss += out['G_loss']
+                #     g_batch += 1
+
+                iteration += 1
                 
         print("Training : Mean G loss : {} / Mean D loss : {} ({} seconds elapsed)".format(g_loss/g_batch, d_loss/d_batch, time.time()-secs))
         scores['G_loss_train'].append((g_loss/g_batch))
