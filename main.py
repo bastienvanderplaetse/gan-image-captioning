@@ -179,9 +179,10 @@ def run(args):
         
     
     if logging:
+        scores['BLEU'] = bleus
         output_scores = os.path.join(output, 'scores.json')
         exh.write_json(scores, output_scores)
-        print("Scores saved in {}".format(output_scores))        
+        print("Scores saved in {}".format(output_scores))      
 
 
 if __name__ == "__main__":
