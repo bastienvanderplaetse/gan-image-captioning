@@ -101,7 +101,7 @@ class WGAN(nn.Module):
 
         # return {"G_loss": g_loss.to("cpu").item(), "D_loss": d_loss.to("cpu").item()}
 
-        return {"G_loss": g_loss, "D_loss": d_loss.to("cpu").item()}
+        return {"G_loss": g_loss.to("cpu").item(), "D_loss": d_loss.to("cpu").item()}
         
 
         
