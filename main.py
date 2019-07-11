@@ -49,14 +49,14 @@ def run(args):
         num_workers=config['iterator']['train']['num_workers']
     )
 
-    vloss_dataset = CaptioningDataset(config['data']['val'], "eval", vocab, config['sampler']['val'])
-    vloss_iterator = DataLoader(
-        vloss_dataset,
-        batch_sampler=vloss_dataset.sampler,
-        collate_fn=vloss_dataset.collate_fn,
-        pin_memory=config['iterator']['val']['pin_memory'],
-        num_workers=config['iterator']['val']['num_workers']
-    )
+    # vloss_dataset = CaptioningDataset(config['data']['val'], "eval", vocab, config['sampler']['val'])
+    # vloss_iterator = DataLoader(
+    #     vloss_dataset,
+    #     batch_sampler=vloss_dataset.sampler,
+    #     collate_fn=vloss_dataset.collate_fn,
+    #     pin_memory=config['iterator']['val']['pin_memory'],
+    #     num_workers=config['iterator']['val']['num_workers']
+    # )
 
     beam_dataset = CaptioningDataset(config['data']['beam'], "beam", vocab, config['sampler']['beam'])
     beam_iterator = DataLoader(
