@@ -147,7 +147,7 @@ def beam_search(models, data_loader, vocab, beam_size=5, max_len=15, lp_alpha=0.
     for row in results:
         sentences.append(uvoc.tokens2words(row, vocab))
 
-    return sentences
+    return sentences, results
 
 def _beam_search(generator, data_loader, vocab, config, device):
     max_batch_size = data_loader.batch_sampler.batch_size

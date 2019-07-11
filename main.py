@@ -152,7 +152,7 @@ def run(args):
         # Beam search
         print("Beam search...")
         # generated_sentences = beam_search(model.G, beam_iterator, vocab, config['beam_search'], device)
-        generated_sentences = beam_search([model], beam_iterator, vocab, device=device)
+        generated_sentences, generated_tokens = beam_search([model], beam_iterator, vocab, beam_size=config['beam_search']['beam_size'], max_len=config['beam_search']['max_len'], device=device)
 
         # BLEU score
         for n in range(max_bleu):

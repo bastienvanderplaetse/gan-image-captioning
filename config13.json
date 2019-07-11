@@ -86,7 +86,7 @@
     },
     "beam_search": {
         "beam_size": 5,
-        "max_len": 20
+        "max_len": 15
     },
     "BLEU": {
         "max_bleu": 4
