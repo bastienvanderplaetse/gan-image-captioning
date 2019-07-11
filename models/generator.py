@@ -42,6 +42,8 @@ class Generator(nn.Module):
         self.hid2out = FF(self.hidden_size, self.input_size, bias_zero=True, activ="relu")
         self.out2prob = FF(self.input_size, self.n_vocab)
 
+        self.n_states = 1
+
     def forward(self, features, y):
         y = self.emb(y)
         # y.shape (X, Y, Z) => X = taille des phrases / Y = nbre de phrases / Z = vecteur d'embedding des mots
@@ -111,3 +113,10 @@ class Generator(nn.Module):
     def _rnn_init_random(self, ctx, ctx_mask):
         """Returns the initial h_0, c_0 for the decoder."""
         return self.z.rsample(torch.Size([ctx.shape[1], self.hidden_size])).squeeze(-1).to(ctx.device)
+
+    def _rnn_init_zero(self, ctx, ctx_mask):
+        h = torch.zeros(
+            ctx.shape[1], self.hidden_size, device=ctx.device)
+        if self.n_states == 2:
+            return (h,h)
+        return h

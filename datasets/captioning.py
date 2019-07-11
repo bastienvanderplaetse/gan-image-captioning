@@ -14,15 +14,15 @@ class CaptioningDataset(Dataset):
         self.datasets = dict()
 
         # Image features
-        self.datasets['feats'] = NumpyDataset(data_files['features'], key="feats")
+        self.datasets['feats'] = NumpyDataset(data_files['features'], key="feats", mode=mode)
         # Sentences in human language
-        self.datasets['text'] = TextDataset(data_files['captions'])
+        self.datasets['text'] = TextDataset(data_files['captions'], mode=mode)
         # Sentences in tokens without <bos> and <eos>
-        self.datasets['captions'] = CaptionDataset(data_files['captions'], vocab, bos=False, key="captions")
+        self.datasets['captions'] = CaptionDataset(data_files['captions'], vocab, bos=False, key="captions", mode=mode)
         # Sentences in tokens with <bos> and <eos>
-        self.datasets['tokenized'] = CaptionDataset(data_files['captions'], vocab, key="tokenized")
+        self.datasets['tokenized'] = CaptionDataset(data_files['captions'], vocab, key="tokenized", mode=mode)
         # Image file name
-        self.datasets['image_file'] = TextDataset(data_files['links'])
+        self.datasets['image_file'] = TextDataset(data_files['links'], mode=mode)
 
         # Checks that data are aligned
         sizes = set([len(dataset) for dataset in self.datasets.values()])

@@ -18,7 +18,9 @@ import urllib
 from socket import error as SocketError
 import errno
 
-MAIN_FOLDER = "cocodataset"
+MAX_SIZE = 5000
+
+MAIN_FOLDER = "cocodataset_small"
 IMAGE_FOLDER = "{}/images".format(MAIN_FOLDER)
 CAPTIONS_FOLDER = "{}/captions".format(MAIN_FOLDER)
 LINKS_FOLDER = "{}/links".format(MAIN_FOLDER)
@@ -123,10 +125,16 @@ def format_set(set_name, filename, image_factory):
                         "feats": feats
                     }
     
+    if MAX_SIZE > 0:
+            captions = captions[:MAX_SIZE]
     captions = '\n'.join(captions)
     exh.write_text(captions, CAPTIONS_FILE.format("{}.en".format(set_name)))
+    if MAX_SIZE > 0:
+            links = links[:MAX_SIZE]
     links = '\n'.join(links)
     exh.write_text(links, LINKS_FILE.format("{}.txt".format(set_name)))
+    if MAX_SIZE > 0:
+            features = features[:MAX_SIZE]
     features = np.array(features)
     np.save(FEATURES_FILE.format(set_name), features)
 
@@ -142,9 +150,15 @@ def format_set(set_name, filename, image_factory):
         
         captions = ["###".join(sentences) for sentences in captions]
         captions = '\n'.join(captions)
+        if MAX_SIZE > 0:
+            captions = captions[:MAX_SIZE]
         exh.write_text(captions, CAPTIONS_FILE.format("beam.en"))
+        if MAX_SIZE > 0:
+            links = links[:MAX_SIZE]
         links = '\n'.join(links)
         exh.write_text(links, LINKS_FILE.format("beam.txt"))
+        if MAX_SIZE > 0:
+            features = features[:MAX_SIZE]
         features = np.array(features)
         np.save(FEATURES_FILE.format("beam"), features)
 

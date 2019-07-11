@@ -104,9 +104,12 @@ def run(args):
     model.train(True)
     torch.set_grad_enabled(True)
 
-    for epoch in range(config['max_epoch']):
+    # for epoch in range(config['max_epoch']):
+    epoch = 1
+    cpt = 0
+    while True:
         secs = time.time()
-        print("Starting Epoch {}".format(epoch + 1))
+        print("Starting Epoch {}".format(epoch))
 
         iteration = 1
 
@@ -116,21 +119,21 @@ def run(args):
         g_loss = 0
 
         for batch in train_iterator:
-            if time.time()-secs <= 30*60:
-                batch.device(device)
+            # if time.time()-secs <= 30*60:
+            batch.device(device)
             
-                out = model(batch, optim_G, optim_D, epoch, iteration)
+            out = model(batch, optim_G, optim_D, epoch, iteration)
             
-                d_loss += out['D_loss']
-                d_batch += 1
-                g_loss += out['G_loss']
-                g_batch += 1
+            d_loss += out['D_loss']
+            d_batch += 1
+            g_loss += out['G_loss']
+            g_batch += 1
 
-                # if iteration % generator_trained == 0:
-                #     g_loss += out['G_loss']
-                #     g_batch += 1
+            # if iteration % generator_trained == 0:
+            #     g_loss += out['G_loss']
+            #     g_batch += 1
 
-                iteration += 1
+            iteration += 1
                 
         print("Training : Mean G loss : {} / Mean D loss : {} ({} seconds elapsed)".format(g_loss/g_batch, d_loss/d_batch, time.time()-secs))
         scores['G_loss_train'].append((g_loss/g_batch))
@@ -163,18 +166,26 @@ def run(args):
         # scores['bleu'].append(score)
 
         if score > best_bleu[0]:
-            best_bleu = (score, epoch + 1)
+            best_bleu = (score, epoch)
+            filename = 'output_epoch{}_bleu{}'.format(epoch,score)
+            out_file = os.path.join(output, filename)
+            torch.save(model.state_dict(), out_file)
 
         print("Best BLEU so far : {} (Epoch {})".format(best_bleu[0], best_bleu[1]))
 
         if logging:
-            output_file = 'output_{}'.format(epoch + 1)
+            output_file = 'output_{}'.format(epoch)
             output_sentences = os.path.join(output, output_file)
             exh.write_text('\n'.join(generated_sentences), output_sentences)
         
         model.train(True)
         torch.set_grad_enabled(True)
         print("Epoch finished in {} seconds".format(time.time()-secs))
+
+        if epoch - best_bleu[1] == 5:
+            break
+            
+        epoch += 1
 
         
     

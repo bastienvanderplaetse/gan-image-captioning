@@ -76,7 +76,7 @@
             "dropout_type": "local",
             "dropout_state": 0.3,
             "train_iteration": 5,
-            "dec_init_type": "random",
+            "dec_init_type": "zero",
             "att_activ": "tanh"
         },
         "discriminator": {

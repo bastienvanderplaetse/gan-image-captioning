@@ -15,9 +15,11 @@ class CaptionDataset(Dataset):
             "<bos>" and ending-of-sentence "<eos> markers will be prepended to sentences.
     """
 
-    def __init__(self, fname, vocab, bos=True, key=None):
+    def __init__(self, fname, vocab, bos=True, key=None, mode=None):
         self.fname = fname
         captions = exh.read_file(fname)
+        if mode == 'train':
+            captions = captions[:50000]
         self.data = []
         self.lengths = []
         self.key = key

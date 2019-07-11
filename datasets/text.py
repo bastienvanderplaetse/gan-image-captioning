@@ -13,9 +13,11 @@ class TextDataset(Dataset):
         fname (str): A string object giving the corpus.
     """
 
-    def __init__(self, fname):
+    def __init__(self, fname, mode=None):
         self.fname = fname
         self.data = exh.read_file(fname)
+        if mode == 'train':
+            self.data = self.data[:50000]
         self.lens = [len(sentence) for sentence in self.data]
 
         self.size = len(self.data)
