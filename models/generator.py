@@ -39,7 +39,7 @@ class Generator(nn.Module):
         att_activ = config_model['att_activ']
         self.att = FF(feature_size, self.hidden_size, activ=att_activ)
 
-        self.hid2out = FF(self.hidden_size, self.input_size, bias_zero=True, activ="relu")
+        self.hid2out = FF(self.hidden_size, self.input_size, bias_zero=True, activ="tanh")
         self.out2prob = FF(self.input_size, self.n_vocab)
 
         self.n_states = 1
@@ -83,7 +83,7 @@ class Generator(nn.Module):
         # hidden_state from first decoder
         h1_c1 = self.dec0(dropped_y, h)
         h1 = get_rnn_hidden_state(h1_c1)
-        
+
         if self.dropout_state > 0:
             h1 = self.do_state(h1)
 
@@ -98,12 +98,13 @@ class Generator(nn.Module):
 
         prob = F.softmax(self.out2prob(logit), dim=-1)
         # prob = F.log_softmax(self.out2prob(logit), dim=-1)
-        
+
         return prob, h2
 
 
     def f_probs(self, batch_size, n_vocab, device):
-        return torch.zeros(batch_size, n_vocab, device=device)
+        # return torch.zeros(batch_size, n_vocab, device=device)
+        return torch.ones(batch_size, n_vocab, device=device)
 
     def f_init(self, ctx_dict):
         """Returns the initial h_0, c_0 for the decoder."""

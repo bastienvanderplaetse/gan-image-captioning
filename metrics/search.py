@@ -147,7 +147,7 @@ def beam_search(models, data_loader, vocab, beam_size=5, max_len=15, lp_alpha=0.
     for row in results:
         sentences.append(uvoc.tokens2words(row, vocab))
 
-    return sentences, results
+    return sentences
 
 def _beam_search(generator, data_loader, vocab, config, device):
     max_batch_size = data_loader.batch_sampler.batch_size
@@ -155,15 +155,15 @@ def _beam_search(generator, data_loader, vocab, config, device):
     k = config['beam_size']
     n_vocab = len(vocab['token_list'])
     inf = -1000
-    
-    nll_storage = torch.zeros(max_batch_size, device=device)    
+
+    nll_storage = torch.zeros(max_batch_size, device=device)
     beam_storage = torch.zeros(max_len+1, max_batch_size, k, dtype=torch.long, device=device)
     mask = torch.arange(max_batch_size * k, device=device)
-    
+
     results = []
     for batch in data_loader:
         batch.device(device)
-            
+
         feats = (batch['feats'])
         features = {'feats': (feats, None)}
         # features['feats'][0].shape => 1 x batch_size x 2048
@@ -181,7 +181,7 @@ def _beam_search(generator, data_loader, vocab, config, device):
         beam = beam_storage.narrow(1, 0, batch.size).zero_()
 
         nk_mask = mask.narrow(0, 0, batch.size * k)
-        
+
         for tstep in range(max_len):
             # print("=============================")
             ctx_dict = tile_ctx_dict(features, tile)
@@ -236,7 +236,7 @@ def _beam_search(generator, data_loader, vocab, config, device):
             nll, beam[tstep] = nll.unsqueeze_(2).add(log_proba.view(batch.size, -1, n_vocab)).view(batch.size, -1).topk(k, sorted=False, largest=True)
             # print('005')
             # print(pdxs)
-            
+
             pdxs = beam[tstep] / n_vocab
             # print('006')
             # print(beam)
@@ -264,7 +264,7 @@ def _beam_search(generator, data_loader, vocab, config, device):
             # print(tile.shape)
             # print(tile)
             # print(pdxs)
-            
+
             if tstep > 0:
                 # Permute all hypothesis history according to new order
                 # print(len(pdxs))
@@ -278,13 +278,13 @@ def _beam_search(generator, data_loader, vocab, config, device):
                 beam[:tstep] = beam[:tstep].gather(2, pdxs.repeat(tstep, 1, 1)) # Try by replacing tstep by tsep+1
             # print('010')
             # print(pdxs)
-        
+
         beam[max_len] = vocab['<eos>']['id']
-        
+
         top_hyps = nll.topk(1, sorted=False, largest=True)[1].squeeze(1)
         hyps = beam[:, range(batch.size), top_hyps].t().to("cpu")
         results.extend(hyps.tolist())
-    
+
     sentences = []
     for row in results:
         sentences.append(uvoc.tokens2words(row, vocab))
@@ -305,3 +305,46 @@ def tile_ctx_dict(ctx_dict, idxs):
         k: (t[:, idxs], None if mask is None else mask[:, idxs])
         for k, (t, mask) in ctx_dict.items()
     }
+
+def max_search(model, data_loader, vocab, max_len=15, device=None):
+    generator = model.G
+    n_vocab = len(vocab['token_list'])
+    results = []
+
+    for batch in data_loader:
+        batch.device(device)
+        # print(batch)
+
+        features = model.encode(batch)
+
+        sentences= batch['tokenized']
+        h = generator.f_init(features)
+        prob = torch.zeros(sentences.shape[1], n_vocab, device=device)
+        y_t = generator.emb(sentences[0])
+        tokens = torch.zeros(max_len, batch.size, device=device)
+
+        for tstep in range(max_len):
+            prob, h = generator.f_next(features, y_t, prob, h)
+            # print(torch.sum(prob, dim=0))
+            # print(torch.sum(prob, dim=1))
+            # print(prob.shape)
+            # b1 = torch.argmax(prob,dim=0)
+            # print(b1.shape)
+            y_t = torch.argmax(prob,dim=1)
+            tokens[tstep] = y_t
+            # print(tokens)
+            # print(y_t)
+            # print(y_t.shape)
+            y_t = generator.emb(y_t)
+            # print(y_t)
+            # print(y_t.shape)
+
+        tokens = tokens.to('cpu')
+        tokens = tokens[:,range(batch.size)].t().tolist()
+        results.extend(tokens)
+
+    sentences = []
+    for row in results:
+        sentences.append(uvoc.tokens2words(row, vocab))
+
+    return sentences

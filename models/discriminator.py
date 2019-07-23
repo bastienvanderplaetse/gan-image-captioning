@@ -26,6 +26,12 @@ class Discriminator(nn.Module):
         self.att = FF(feature_size, self.hidden_size, activ=att_activ)
 
         self.out2prob_classif = FF(self.hidden_size, 1, activ="sigmoid")
+        # self.out2prob_classif = FF(self.hidden_size, 1, activ="tanh")
+        # self.out2prob_classif = nn.Sequential(
+            # nn.LeakyReLU(0.2, inplace=True),
+        #     nn.Linear(self.hidden_size, 1)
+        # )
+
 
         self.n_states = 1
 
@@ -54,7 +60,7 @@ class Discriminator(nn.Module):
         # print(torch.isnan(o))
         # print(h)
         # print(torch.isnan(h))
-        
+
         valid = self.out2prob_classif(o)
         # print(valid)
         # print(torch.isnan(valid))

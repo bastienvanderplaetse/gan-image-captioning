@@ -5,10 +5,10 @@
             "features": "cocodataset/features/train.npy",
             "links": "cocodataset/links/train.txt"
         },
-        "val": {
-            "captions": "cocodataset/captions/val.en",
-            "features": "cocodataset/features/val.npy",
-            "links": "cocodataset/links/val.txt"
+        "test": {
+            "captions": "cocodataset/captions/test.en",
+            "features": "cocodataset/features/test.npy",
+            "links": "cocodataset/links/test.txt"
         },
         "beam": {
             "captions": "cocodataset/captions/beam.en",
@@ -30,12 +30,12 @@
     },
     "sampler": {
         "train": {
-            "batch_size": 128,
+            "batch_size": 512,
             "max_len": 20
         },
-        "val": {
+        "test": {
             "batch_size": 32,
-            "max_len": 20
+            "drop_last": false
         },
         "beam": {
             "batch_size": 32,
@@ -47,7 +47,7 @@
             "pin_memory": false,
             "num_workers": 0
         },
-        "val": {
+        "test": {
             "pin_memory": false,
             "num_workers": 0
         },
@@ -75,7 +75,7 @@
             "dropout_emb": 0.0,
             "dropout_type": "local",
             "dropout_state": 0.3,
-            "train_iteration": 5,
+            "train_iteration": 10,
             "dec_init_type": "zero",
             "att_activ": "tanh"
         },
@@ -90,5 +90,6 @@
     },
     "BLEU": {
         "max_bleu": 4
-    }
+    },
+    "load_dict": ""
 }

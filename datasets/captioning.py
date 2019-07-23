@@ -34,7 +34,7 @@ class CaptioningDataset(Dataset):
         self.required_keys = ["feats", "captions", "tokenized"]
         self.collate_fn = get_collate([self.datasets[key] for key in self.required_keys])
 
-        if mode == "beam":
+        if mode == "beam" or mode == "test":
             sampler = SequentialSampler(self)
             self.sampler = BatchSampler(sampler, batch_size=sampler_config['batch_size'], drop_last=sampler_config['drop_last'])
         else:

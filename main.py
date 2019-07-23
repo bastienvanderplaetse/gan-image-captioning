@@ -8,8 +8,9 @@ import utils.vocab as uvoc
 
 from datasets.captioning import CaptioningDataset
 from metrics.scores import bleu_score, prepare_references
-from metrics.search import beam_search
+from metrics.search import beam_search, max_search
 from models.wgan import WGAN
+from models.relativistic_gan import RelativisticGAN
 from torch.utils.data import DataLoader
 from utils import check_args, fix_seed, memory_usage
 
@@ -74,15 +75,16 @@ def run(args):
         uvoc.glove_weights(weights, config['model']['embeddings'], vocab)
 
     model = WGAN(len(vocab['token_list']), config['model'], weights)
+    # model = RelativisticGAN(len(vocab['token_list']), config['model'], weights)
     model.reset_parameters()
 
     lr = config['model']['optimizers']['lr']
     betas = (config['model']['optimizers']['betas']['min'], config['model']['optimizers']['betas']['max'])
     weight_decay = config['model']['optimizers']['weight_decay']
-    
+
     optim_D = optim.Adam(model.D.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
     optim_G = optim.Adam(model.G.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
-    
+
     model.to(device)
 
     fix_seed(config['seed'] + 1)
@@ -117,28 +119,29 @@ def run(args):
         g_batch = 0
         d_loss = 0
         g_loss = 0
-
         for batch in train_iterator:
             # if time.time()-secs <= 30*60:
             batch.device(device)
-            
+
             out = model(batch, optim_G, optim_D, epoch, iteration)
-            
+
             d_loss += out['D_loss']
             d_batch += 1
             g_loss += out['G_loss']
             g_batch += 1
+
+            # print(time.time()-secs)
 
             # if iteration % generator_trained == 0:
             #     g_loss += out['G_loss']
             #     g_batch += 1
 
             iteration += 1
-                
+
         print("Training : Mean G loss : {} / Mean D loss : {} ({} seconds elapsed)".format(g_loss/g_batch, d_loss/d_batch, time.time()-secs))
         scores['G_loss_train'].append((g_loss/g_batch))
         scores['D_loss_train'].append((d_loss/d_batch))
-        
+
         # Validation
         model.train(False)
         torch.set_grad_enabled(False)
@@ -152,14 +155,15 @@ def run(args):
         # Beam search
         print("Beam search...")
         # generated_sentences = beam_search(model.G, beam_iterator, vocab, config['beam_search'], device)
-        generated_sentences, generated_tokens = beam_search([model], beam_iterator, vocab, beam_size=config['beam_search']['beam_size'], max_len=config['beam_search']['max_len'], device=device)
+        # generated_sentences = beam_search([model], beam_iterator, vocab, beam_size=config['beam_search']['beam_size'], max_len=config['beam_search']['max_len'], device=device)
+        generated_sentences = max_search(model, beam_iterator, vocab, max_len=config['beam_search']['max_len'], device=device)
 
         # BLEU score
-        for n in range(max_bleu):
+        for n in range(3,max_bleu):
             score = bleu_score(references, generated_sentences, n+1)
             bleus[n].append(score)
             print("BLEU-{} score : {}".format(n+1, score))
-        
+
 
         # score = bleu_score(references, generated_sentences)
         # print("BLEU score : {}".format(score))
@@ -177,23 +181,23 @@ def run(args):
             output_file = 'output_{}'.format(epoch)
             output_sentences = os.path.join(output, output_file)
             exh.write_text('\n'.join(generated_sentences), output_sentences)
-        
+
         model.train(True)
         torch.set_grad_enabled(True)
         print("Epoch finished in {} seconds".format(time.time()-secs))
 
-        if epoch - best_bleu[1] == 5:
-            break
-            
+        # if epoch - best_bleu[1] == 5:
+        #     break
+
         epoch += 1
 
-        
-    
+
+
     if logging:
         scores['BLEU'] = bleus
         output_scores = os.path.join(output, 'scores.json')
         exh.write_json(scores, output_scores)
-        print("Scores saved in {}".format(output_scores))      
+        print("Scores saved in {}".format(output_scores))
 
 
 if __name__ == "__main__":

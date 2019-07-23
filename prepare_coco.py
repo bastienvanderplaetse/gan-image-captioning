@@ -18,9 +18,9 @@ import urllib
 from socket import error as SocketError
 import errno
 
-MAX_SIZE = 5000
+MAX_SIZE = 0
 
-MAIN_FOLDER = "cocodataset_small"
+MAIN_FOLDER = "cocodataset_test"
 IMAGE_FOLDER = "{}/images".format(MAIN_FOLDER)
 CAPTIONS_FOLDER = "{}/captions".format(MAIN_FOLDER)
 LINKS_FOLDER = "{}/links".format(MAIN_FOLDER)
@@ -165,14 +165,14 @@ def format_set(set_name, filename, image_factory):
 def run():
     prepare_directories()
 
-    download_file()
+    # download_file()
 
-    image_factory = ImageFactory(resize=256,crop=224)
+    # image_factory = ImageFactory(resize=256,crop=224)
 
-    print("Formatting train set")
-    format_set("train", TRAIN_FILE, image_factory)
-    print("Formatting val set")
-    format_set("val", VAL_FILE, image_factory)    
+    # print("Formatting train set")
+    # format_set("train", TRAIN_FILE, image_factory)
+    # print("Formatting val set")
+    # format_set("val", VAL_FILE, image_factory)    
 
 if __name__ == "__main__":
     run()

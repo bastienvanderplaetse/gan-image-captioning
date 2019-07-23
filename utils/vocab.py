@@ -26,7 +26,7 @@ def words2tokens(sentence, vocab, tokenized=True):
 
     if tokenized:
         tokens = [vocab["<bos>"]["id"]] + tokens + [vocab["<eos>"]["id"]]
-    
+
     return tokens
 
 def tokens2words(tokens, vocab):
@@ -47,7 +47,7 @@ def tokens2words(tokens, vocab):
     for token in tokens:
         if token == 2: # if <eos>
             break
-        words.append(vocab['token_list'][token])
+        words.append(vocab['token_list'][int(token)])
 
     return ' '.join(words)
 
@@ -56,7 +56,7 @@ def init_weights(vocab, emb_dim):
     sd = 1/np.sqrt(emb_dim)
     weights = np.random.normal(0, scale=sd, size=[vocab_size, emb_dim])
     weights = weights.astype(np.float32)
-    
+
     return weights
 
 def glove_weights(weights, glove_file, vocab):
