@@ -111,3 +111,14 @@ data/*
 output/*
 annotations/*
 cocodataset/*
+_output_argmax
+*.png
+output_argmax
+output_beam
+output_epoch29_bleu0.07394183608962669
+testmodels
+oldconfigs
+test*.json
+!test56.json
+!test56test.json
+wgan-*.json

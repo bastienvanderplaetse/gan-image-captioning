@@ -32,7 +32,7 @@ class NumpyDataset(Dataset):
         elif self.path.suffix == '.npz':
             assert key_file, "A key should be provided for .npz files."
             self.data = np.load(self.path)[key_file]
-        
+
         if mode == 'train':
             self.data = self.data[:50000]
 

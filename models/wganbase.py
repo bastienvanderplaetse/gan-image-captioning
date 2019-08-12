@@ -10,10 +10,10 @@ from .generator import Generator
 from torch import nn
 from torch.autograd import Variable
 
-class WGAN(nn.Module):
+class WGANBase(nn.Module):
 
     def __init__(self, n_vocab, config_model, weights):
-        super(WGAN, self).__init__()
+        super(WGANBase, self).__init__()
         self.n_trg_vocab = n_vocab
 
         emb_dim = config_model['emb_dim']
@@ -63,54 +63,6 @@ class WGAN(nn.Module):
         feats = (batch['feats'])
         return {'feats': (feats, None)}
 
-    def ffforward(self, batch, optimG, optimD, epoch, iteration):
-        sentences= batch['tokenized']
-        sentences_G = sentences[:-1]
-        sentences_D = sentences[1:]
-
-        features = self.encode(batch)
-
-        one = torch.cuda.FloatTensor([1])
-        mone = one * -1
-
-        for i in range(self.generator_training):
-            self.D.zero_grad()
-
-            D_real = self.D(features, sentences_D, epoch=epoch+1)
-            D_real = torch.mean(D_real)
-            D_real.backward(mone,retain_graph=True)
-
-            fake_samples = self.G(features, sentences_G)
-            D_fake = self.D(features, fake_samples, one_hot=False, epoch=epoch+1)
-            D_fake = torch.mean(D_fake)
-            D_fake.backward(one,retain_graph=True)
-
-            gradient_penalty = self.compute_gradient_penalty(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab), fake_samples)
-            gradient_penalty.backward(retain_graph=i!=(self.generator_training-1))
-
-            D_cost = D_fake - D_real + gradient_penalty * self.gradient_weight
-            Wasserstein_D = D_real - D_fake
-            optimD.step()
-
-        for p in self.D.parameters():
-            p.requires_grad = False
-
-        self.G.zero_grad()
-
-        fake_g = self.G(features, sentences_G)
-        fake = self.D(features, fake_g, one_hot=False)
-        fake = torch.mean(fake)
-        fake.backward(mone)
-        G_cost = -fake
-        optimG.step()
-
-        for p in self.D.parameters():
-            p.requires_grad = True
-
-        self.sig = nn.LogSigmoid()
-
-        return {"G_loss": G_cost.to("cpu").item(), "D_loss": D_cost.to("cpu").item()}
-
     def forward(self, batch, optimG, optimD, epoch, iteration):
         # print("=========================")
         sentences = batch['tokenized']
@@ -139,26 +91,16 @@ class WGAN(nn.Module):
             real = self.D(features, sentences_D, epoch=epoch+1)
             fake = self.D(features, gen_s, one_hot=False, epoch=epoch+1)
 
-            # gradient_penalty = self.compute_gradient_penalty2(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab).data, gen_s.data)
-            gradient_penalty = self.compute_gradient_penalty(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab).data, gen_s.data)
-            # gradient_penalty = self.compute_gradient_penalty(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab), gen_s, real, fake)
-            # import sys
-            # sys.exit(0)
             # print(torch.mean(real))
             # print(torch.mean(fake))
-            # print(self.sig(torch.mean(fake)))
-            # print(self.sig(1-torch.mean(fake)))
-            # print(gradient_penalty)
-            # print(self.compute_gradient_penalty2(self.D, features, onehot_batch_data(sentences_D, self.n_trg_vocab), gen_s))
             # print("---------------------")
-            d_loss = -torch.mean(real) + torch.mean(fake) + self.gradient_weight * gradient_penalty
-            # d_loss = -self.sig(torch.mean(fake)) - nn.LogSigmoid(1-torch.mean(fake)) + gradient_penalty
-            # d_loss = torch.mean(real) - torch.mean(fake) + self.gradient_weight * gradient_penalty
+            d_loss = -torch.mean(real) + torch.mean(fake)
 
             d_loss.backward(retain_graph=i!=(self.generator_training-1))
-            # d_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.D.parameters(), self.clip)
             optimD.step()
+
+            for p in self.D.parameters():
+                p.data.clamp_(-self.clip, self.clip)
         # print("========================")
 
         optimG.zero_grad()
@@ -169,9 +111,9 @@ class WGAN(nn.Module):
         # g_loss = -nn.LogSigmoid(torch.mean(fake))
         # g_loss = torch.mean(fake)
         g_loss.backward()
-
-        torch.nn.utils.clip_grad_norm_(self.G.parameters(), self.clip)
         optimG.step()
+        for p in self.G.parameters():
+            p.data.clamp_(-self.clip, self.clip)
 
         return {"G_loss": g_loss.to("cpu").item(), "D_loss": d_loss.to("cpu").item()}
 
@@ -180,7 +122,7 @@ class WGAN(nn.Module):
         # return {"G_loss": g_loss, "D_loss": d_loss.to("cpu").item()}
 
 
-    def compute_gradient_penalty_lip(self, D, feature, real_samples, fake_samples, realD, fakeD):
+    def compute_gradient_penalty(self, D, feature, real_samples, fake_samples, realD, fakeD):
         with open('file.txt', 'a') as f:
             # print(real_samples.shape)
             # real [13, 512, 4004]
@@ -225,7 +167,7 @@ class WGAN(nn.Module):
         # gradient = torch.mean(gradient)
         # return gradient
 
-    def compute_gradient_penalty(self, D, feature, real_samples, fake_samples):
+    def compute_gradient_penalty2(self, D, feature, real_samples, fake_samples):
         # with open('file.txt', 'a') as f:
             # print("============================================",file=f)
             Tensor = torch.cuda.FloatTensor

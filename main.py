@@ -11,6 +11,9 @@ from metrics.scores import bleu_score, prepare_references
 from metrics.search import beam_search, max_search
 from models.wgan import WGAN
 from models.relativistic_gan import RelativisticGAN
+from models.wganbase import WGANBase
+from models.cgan import CGAN
+from testmodels.dai import DaiGAN
 from torch.utils.data import DataLoader
 from utils import check_args, fix_seed, memory_usage
 
@@ -75,6 +78,9 @@ def run(args):
         uvoc.glove_weights(weights, config['model']['embeddings'], vocab)
 
     model = WGAN(len(vocab['token_list']), config['model'], weights)
+    # model = WGANBase(len(vocab['token_list']), config['model'], weights)
+    # model = CGAN(len(vocab['token_list']), config['model'], weights)
+    # model = DaiGAN(len(vocab['token_list']), config['model'], weights)
     # model = RelativisticGAN(len(vocab['token_list']), config['model'], weights)
     model.reset_parameters()
 
@@ -129,7 +135,6 @@ def run(args):
             d_batch += 1
             g_loss += out['G_loss']
             g_batch += 1
-
             # print(time.time()-secs)
 
             # if iteration % generator_trained == 0:
@@ -159,15 +164,13 @@ def run(args):
         generated_sentences = max_search(model, beam_iterator, vocab, max_len=config['beam_search']['max_len'], device=device)
 
         # BLEU score
-        for n in range(3,max_bleu):
-            score = bleu_score(references, generated_sentences, n+1)
-            bleus[n].append(score)
-            print("BLEU-{} score : {}".format(n+1, score))
-
-
-        # score = bleu_score(references, generated_sentences)
-        # print("BLEU score : {}".format(score))
-        # scores['bleu'].append(score)
+        # for n in range(3,max_bleu):
+        #     score = bleu_score(references, generated_sentences, n+1)
+        #     bleus[n].append(score)
+        #     print("BLEU-{} score : {}".format(n+1, score))
+        score = bleu_score(references, generated_sentences, max_bleu)
+        bleus[max_bleu-1].append(score)
+        print("BLEU-{} score : {}".format(max_bleu, score))
 
         if score > best_bleu[0]:
             best_bleu = (score, epoch)
@@ -186,8 +189,8 @@ def run(args):
         torch.set_grad_enabled(True)
         print("Epoch finished in {} seconds".format(time.time()-secs))
 
-        # if epoch - best_bleu[1] == 5:
-        #     break
+        if epoch - best_bleu[1] == 5:
+            break
 
         epoch += 1
 

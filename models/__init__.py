@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-__all__ = ['wgan','relativistic_gan']
+__all__ = ['wgan','relativistic_gan', 'wganbase', 'cgan']
 
 def get_activation_fn(name):
     """Returns a callable activation function from torch. From nmtpytorch framework"""

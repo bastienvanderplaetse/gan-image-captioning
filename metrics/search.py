@@ -3,6 +3,8 @@ import torch
 from utils import vocab as uvoc
 from utils import memory_usage
 
+from pprint import pprint
+
 def beam_search(models, data_loader, vocab, beam_size=5, max_len=15, lp_alpha=0., suppress_unk=False, n_best=False, device=None):
      # This is the batch-size requested by the user but with sorted
     # batches, efficient batch-size will be <= max_batch_size
@@ -325,12 +327,23 @@ def max_search(model, data_loader, vocab, max_len=15, device=None):
 
         for tstep in range(max_len):
             prob, h = generator.f_next(features, y_t, prob, h)
+            # m = 0
+            # m_i = 0
+            # t = 0
+            # for i in range(prob[0].shape[0]):
+            #     t = t + prob[0][i]
+            #     if prob[0][i] > m:
+            #         m = prob[0][i]
+            #         m_i = i
+
             # print(torch.sum(prob, dim=0))
             # print(torch.sum(prob, dim=1))
             # print(prob.shape)
             # b1 = torch.argmax(prob,dim=0)
             # print(b1.shape)
             y_t = torch.argmax(prob,dim=1)
+            # with open('aaa.txt', 'a') as f:
+            #     print((y_t, m_i, m, t), file=f)
             tokens[tstep] = y_t
             # print(tokens)
             # print(y_t)
@@ -339,9 +352,11 @@ def max_search(model, data_loader, vocab, max_len=15, device=None):
             # print(y_t)
             # print(y_t.shape)
 
+
         tokens = tokens.to('cpu')
         tokens = tokens[:,range(batch.size)].t().tolist()
         results.extend(tokens)
+        # break
 
     sentences = []
     for row in results:

@@ -59,37 +59,38 @@ def prepare_references_meteor(references):
 def prepare_hypothesis(hypothesis):
     return [hyp.split() for hyp in hypothesis]
 
-def plot_serie(scores):
+def plot_serie(scores, filename):
     for i in range(5):
         score = scores[i]
         fig = plt.figure(constrained_layout=True)
 
         gs = GridSpec(8, 6, figure=fig)
-        
+
         ax1 = fig.add_subplot(gs[0,:])
         ax1.axis('off')
         ax1.text(0, 0, 'Ground truth\n'+'\n'.join(score['references']))
-        
+
         ax2 = fig.add_subplot(gs[1:7,:])
         ax2.axis('off')
         ax2.imshow(mpimg.imread(args.IMAGES + '/' + score['image']))
-        
+
         ax3 = fig.add_subplot(gs[7,:])
         ax3.axis('off')
         ax3.text(0, 0, 'Generated caption :\n' + score['hypothesis'] + '\nBLEU score : ' + str(score['bleu']))
 
         fig.suptitle(score['image'])
-        plt.show()
+        # plt.show()
+        plt.savefig(filename + str(i+1) + ".png")
 
 def run(args):
     references = exh.read_file(args.REFERENCES)
     references = prepare_references(references)
     meteor_refs = prepare_references_meteor(references)
     exh.write_text('\n'.join(meteor_refs), args.REFERENCES+'_0')
-    
+
     hypothesis = exh.read_file(args.HYPOTHESIS)
     hypothesis = prepare_hypothesis(hypothesis)
-    
+
     links = exh.read_file(args.LINKS)
 
     weights = [1/4] * 4
@@ -97,8 +98,8 @@ def run(args):
     print("METEOR")
     # subprocess.call(['java', '-jar', '../meteor-1.5/meteor-1.5.jar', args.HYPOTHESIS, args.REFERENCES+'_0', '-l', 'en', '-r', '7', '-q'])
     total_bleu = corpus_bleu(references, hypothesis, weights)
-    print("BLEU : {}".format(total_bleu)) 
-    
+    print("BLEU : {}".format(total_bleu))
+
     scores = [0] * len(links)
 
     for i in range(len(links)):
@@ -117,9 +118,13 @@ def run(args):
     max_scores = scores[len(links)-5:]
     min_scores = scores[:5]
 
-    plot_serie(max_scores)
-    plot_serie(min_scores)
-    
+    # print(len(max_scores))
+    # pprint(max_scores)
+    # print(len(min_scores))
+    # pprint(min_scores)
+    plot_serie(max_scores, "top")
+    plot_serie(min_scores, "flop")
+
 
 if __name__ == "__main__":
     args = check_args(sys.argv)
