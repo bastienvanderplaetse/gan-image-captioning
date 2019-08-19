@@ -1,0 +1,95 @@
+{
+    "data": {
+        "train": {
+            "captions": "cocodataset/captions/train.en",
+            "features": "cocodataset/features/train.npy",
+            "links": "cocodataset/links/train.txt"
+        },
+        "beam": {
+            "captions": "cocodataset/captions/beam.en",
+            "features": "cocodataset/features/beam.npy",
+            "links": "cocodataset/links/beam.txt"
+        },
+        "test": {
+            "captions": "cocodataset/captions/beam.en",
+            "features": "cocodataset/features/beam.npy",
+            "links": "cocodataset/links/beam.txt"
+        },
+        "images": "cocodataset/images",
+        "vocab": "cocodataset/coco_vocab.en"
+    },
+    "seed": 1561478941,
+    "max_epoch": 50,
+    "logging": {
+        "activate": true,
+        "output_folder": "results"
+    },
+    "cuda": {
+        "ngpu": 1,
+        "device": "cuda:0"
+    },
+    "sampler": {
+        "train": {
+            "batch_size": 512,
+            "max_len": 20
+        },
+        "val": {
+            "batch_size": 32,
+            "max_len": 20
+        },
+        "beam": {
+            "batch_size": 512,
+            "drop_last": false
+        }
+    },
+    "iterator": {
+        "train": {
+            "pin_memory": false,
+            "num_workers": 0
+        },
+        "beam": {
+            "pin_memory": false,
+            "num_workers": 0
+        },
+        "test": {
+            "pin_memory": false,
+            "num_workers": 0
+        }
+    },
+    "model": {
+        "embeddings": "cocodataset/embeddings/glove.6B.300d.txt",
+        "emb_dim": 300,
+        "dec_dim": 256,
+        "gradient_weight": 10,
+        "clip": 1.0,
+        "feature_size": 2048,
+        "optimizers": {
+            "lr": 0.001,
+            "weight_decay": 1e-05,
+            "betas": {
+                "min": 0.5,
+                "max": 0.999
+            }
+        },
+        "generator": {
+            "dropout_emb": 0.0,
+            "dropout_type": "local",
+            "dropout_state": 0.5,
+            "train_iteration": 9,
+            "dec_init_type": "zero",
+            "att_activ": "tanh"
+        },
+        "discriminator": {
+            "dec_init_type": "zero",
+            "att_activ": "relu"
+        }
+    },
+    "beam_search": {
+        "beam_size": 5,
+        "max_len": 20
+    },
+    "BLEU": {
+        "max_bleu": 4
+    },
+    "load_dict": "output_epoch29_bleu0.07394183608962669"
+}

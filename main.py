@@ -10,17 +10,16 @@ from datasets.captioning import CaptioningDataset
 from metrics.scores import bleu_score, prepare_references
 from metrics.search import beam_search, max_search
 from models.wgan import WGAN
+from models.wgangp import WGANGP
+from models.wganlip import WGANLip
 from models.relativistic_gan import RelativisticGAN
 from models.wganbase import WGANBase
-from models.cgan import CGAN
-from testmodels.dai import DaiGAN
 from torch.utils.data import DataLoader
 from utils import check_args, fix_seed, memory_usage
 
 from torchviz import make_dot, make_dot_from_trace
 
 def run(args):
-    print(torch.backends.cudnn.benchmark)
     # Get configuration
     config = exh.load_json(args.CONFIG)
 
@@ -52,16 +51,6 @@ def run(args):
         pin_memory=config['iterator']['train']['pin_memory'],
         num_workers=config['iterator']['train']['num_workers']
     )
-
-    # vloss_dataset = CaptioningDataset(config['data']['val'], "eval", vocab, config['sampler']['val'])
-    # vloss_iterator = DataLoader(
-    #     vloss_dataset,
-    #     batch_sampler=vloss_dataset.sampler,
-    #     collate_fn=vloss_dataset.collate_fn,
-    #     pin_memory=config['iterator']['val']['pin_memory'],
-    #     num_workers=config['iterator']['val']['num_workers']
-    # )
-
     beam_dataset = CaptioningDataset(config['data']['beam'], "beam", vocab, config['sampler']['beam'])
     beam_iterator = DataLoader(
         beam_dataset,
@@ -79,8 +68,8 @@ def run(args):
 
     model = WGAN(len(vocab['token_list']), config['model'], weights)
     # model = WGANBase(len(vocab['token_list']), config['model'], weights)
-    # model = CGAN(len(vocab['token_list']), config['model'], weights)
-    # model = DaiGAN(len(vocab['token_list']), config['model'], weights)
+    # model = WGANBaseGP(len(vocab['token_list']), config['model'], weights)
+    # model = WGANBaseLip(len(vocab['token_list']), config['model'], weights)
     # model = RelativisticGAN(len(vocab['token_list']), config['model'], weights)
     model.reset_parameters()
 
@@ -101,8 +90,6 @@ def run(args):
         "BLEU": [],
         "G_loss_train": [],
         "D_loss_train": []
-        # "G_loss_val": [],
-        # "D_loss_val": []
     }
     max_bleu = config['BLEU']['max_bleu']
     bleus = [[]] * max_bleu
@@ -126,7 +113,6 @@ def run(args):
         d_loss = 0
         g_loss = 0
         for batch in train_iterator:
-            # if time.time()-secs <= 30*60:
             batch.device(device)
 
             out = model(batch, optim_G, optim_D, epoch, iteration)
@@ -135,11 +121,6 @@ def run(args):
             d_batch += 1
             g_loss += out['G_loss']
             g_batch += 1
-            # print(time.time()-secs)
-
-            # if iteration % generator_trained == 0:
-            #     g_loss += out['G_loss']
-            #     g_batch += 1
 
             iteration += 1
 
@@ -150,12 +131,6 @@ def run(args):
         # Validation
         model.train(False)
         torch.set_grad_enabled(False)
-
-        # Loss
-        # out = model.test_performance(vloss_iterator, device)
-        # print("Validation Loss : G loss : {} / D loss : {}".format(out['G_loss'], out['D_loss']))
-        # scores['G_loss_val'].append(out['G_loss'])
-        # scores['D_loss_val'].append(out['D_loss'])
 
         # Beam search
         print("Beam search...")
@@ -189,11 +164,10 @@ def run(args):
         torch.set_grad_enabled(True)
         print("Epoch finished in {} seconds".format(time.time()-secs))
 
-        if epoch - best_bleu[1] == 5:
+        if epoch - best_bleu[1] == 3:
             break
 
         epoch += 1
-
 
 
     if logging:

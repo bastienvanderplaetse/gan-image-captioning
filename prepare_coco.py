@@ -20,7 +20,7 @@ import errno
 
 MAX_SIZE = 0
 
-MAIN_FOLDER = "cocodataset_test"
+MAIN_FOLDER = "cocodataset"
 IMAGE_FOLDER = "{}/images".format(MAIN_FOLDER)
 CAPTIONS_FOLDER = "{}/captions".format(MAIN_FOLDER)
 LINKS_FOLDER = "{}/links".format(MAIN_FOLDER)
@@ -48,7 +48,7 @@ def prepare_directories():
 
 def download_file():
     if not exh.file_exists(ZIP_NAME):
-      os.system("wget http://msvocds.blob.core.windows.net/annotations-1-0-3/captions_train-val2014.zip") 
+      os.system("wget http://msvocds.blob.core.windows.net/annotations-1-0-3/captions_train-val2014.zip")
 
     if not exh.file_exists(TRAIN_FILE) or not exh.file_exists(VAL_FILE):
         os.system('unzip captions_train-val2014.zip')
@@ -103,16 +103,12 @@ def format_set(set_name, filename, image_factory):
         image_id = row['image_id']
         str_id = ID_STR_IMAGE.format(set_name, '0' * (12-len(str(image_id))) + str(image_id))
         is_ok = download_image(image_id, set_name, coco)
-        # if not is_ok:
-        #     print(str_id)
-        #     import sys
-        #     sys.exit(0)
-        
+
         if is_ok:
             caption = format_caption(row['caption'])
             captions.append(caption)
             links.append(str_id)
-        
+
             feats = extract_features(image_id, set_name, image_factory)
             features.append(feats)
 
@@ -124,7 +120,7 @@ def format_set(set_name, filename, image_factory):
                         "captions": [caption],
                         "feats": feats
                     }
-    
+
     if MAX_SIZE > 0:
             captions = captions[:MAX_SIZE]
     captions = '\n'.join(captions)
@@ -147,7 +143,7 @@ def format_set(set_name, filename, image_factory):
             links.append(str(k))
             captions.append(v['captions'])
             features.append(v['feats'])
-        
+
         captions = ["###".join(sentences) for sentences in captions]
         captions = '\n'.join(captions)
         if MAX_SIZE > 0:
@@ -165,14 +161,14 @@ def format_set(set_name, filename, image_factory):
 def run():
     prepare_directories()
 
-    # download_file()
+    download_file()
 
-    # image_factory = ImageFactory(resize=256,crop=224)
+    image_factory = ImageFactory(resize=256,crop=224)
 
-    # print("Formatting train set")
-    # format_set("train", TRAIN_FILE, image_factory)
-    # print("Formatting val set")
-    # format_set("val", VAL_FILE, image_factory)    
+    print("Formatting train set")
+    format_set("train", TRAIN_FILE, image_factory)
+    print("Formatting val set")
+    format_set("val", VAL_FILE, image_factory)    
 
 if __name__ == "__main__":
     run()

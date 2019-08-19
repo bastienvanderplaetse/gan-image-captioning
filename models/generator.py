@@ -26,6 +26,7 @@ class Generator(nn.Module):
         self._init_func = getattr(self, '_rnn_init_{}'.format(dec_init))
 
         self.emb = emb
+        # print(self.emb.weight.require_grad)
 
         if self.dropout_emb > 0:
             self.do_emb = nn.Dropout(p=self.dropout_emb)
@@ -45,6 +46,7 @@ class Generator(nn.Module):
         self.n_states = 1
 
     def forward(self, features, y):
+        # print(self.emb.weight.require_grad)
         y = self.emb(y)
         # y.shape (X, Y, Z) => X = taille des phrases / Y = nbre de phrases / Z = vecteur d'embedding des mots
 

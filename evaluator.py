@@ -118,10 +118,6 @@ def run(args):
     max_scores = scores[len(links)-5:]
     min_scores = scores[:5]
 
-    # print(len(max_scores))
-    # pprint(max_scores)
-    # print(len(min_scores))
-    # pprint(min_scores)
     plot_serie(max_scores, "top")
     plot_serie(min_scores, "flop")
 

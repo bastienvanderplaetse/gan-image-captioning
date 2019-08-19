@@ -13,6 +13,8 @@ from torch.utils.data import DataLoader
 from utils import check_args, fix_seed
 
 def run(args):
+    print(torch.backends.cudnn.benchmark)
+    torch.backends.cudnn.deterministic = True
     # Get configuration
     config = exh.load_json(args.CONFIG)
 
@@ -45,24 +47,19 @@ def run(args):
 
     model = WGAN(len(vocab['token_list']), config['model'], weights)
 
-    # print("The state dict keys: \n\n", model.state_dict().keys())
-    # print(model)
-
     model.reset_parameters()
-    # print("The state dict keys: \n\n", model.state_dict().keys())
-    # print(model)
+    print("The state dict keys: \n\n", model.state_dict().keys())
 
-    # print(model.state_dict())
-    model.load_state_dict(torch.load(config['load_dict']))#, strict=False)
-    # print(torch.load(config['load_dict']))
-    # print(model.state_dict())
+    model.load_state_dict(torch.load(config['load_dict']))
+    for param in list(model.parameters()):
+        param.requires_grad = False
 
-    # c = torch.load(config['load_dict'])
-    # for x in model.state_dict():
-    #     if len(model.state_dict()[x].shape) == 1:
-    #         model.state_dict()[x][:] = c[x]
-    #     elif len(model.state_dict()[x].shape) == 2:
-    #         model.state_dict()[x][:,:] = c[x]
+    c = torch.load(config['load_dict'])
+    for x in model.state_dict():
+        if len(model.state_dict()[x].shape) == 1:
+            model.state_dict()[x][:] = c[x]
+        elif len(model.state_dict()[x].shape) == 2:
+            model.state_dict()[x][:,:] = c[x]
 
     model.to(device)
 
@@ -71,16 +68,19 @@ def run(args):
 
     model.train(False)
     torch.set_grad_enabled(False)
+    model.eval()
+
+    model.G.emb.weight.data = c['G.emb.weight']
 
     generated_sentences = max_search(model, beam_iterator, vocab, max_len=config['beam_search']['max_len'], device=device)
     output_file = 'output_argmax'
-    output_sentences = output_file #os.path.join(output, output_file)
+    output_sentences = output_file
     exh.write_text('\n'.join(generated_sentences), output_sentences)
     score = bleu_score(references, generated_sentences, 4)
     print(score)
     generated_sentences = beam_search([model], beam_iterator, vocab, beam_size=config['beam_search']['beam_size'], max_len=config['beam_search']['max_len'], device=device)
     output_file = 'output_beam'
-    output_sentences = output_file #os.path.join(output, output_file)
+    output_sentences = output_file
     exh.write_text('\n'.join(generated_sentences), output_sentences)
     score = bleu_score(references, generated_sentences, 4)
     print(score)
