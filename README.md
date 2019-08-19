@@ -1,8 +1,11 @@
 
 # gan-image-captioning
 Project realized during my master thesis in Computer Science at [UMONS (University of Mons, Belgium)](https://web.umons.ac.be/en/).
+
 Director : Jean-Benoit DELBROUCK
+
 Co-director : Dr Stéphane DUPONT
+
 Reporters : Dr Hadrien MELOT & Adrien COPPENS
 
 Our model is available [here](http://www.mediafire.com/file/jlnktm8yr5y15qm/output_epoch29_bleu0.07394183608962669/file).
@@ -38,7 +41,9 @@ _Method 2 - Via downloading_
 
 ## Model configuration
 All the configuration parameters of this project are in the `config.json` file. You can create your own copy of the configuration or modify this one.
+
 _Note : the default parameters are the ones that gave us the best results._
+
 The `load_dict` parameter is used to test a specific model. The default one is the one correspind to our best results. This model is available [here](http://www.mediafire.com/file/jlnktm8yr5y15qm/output_epoch29_bleu0.07394183608962669/file).
 
 The model can be selected by uncommented the correct line in `main.py` :
